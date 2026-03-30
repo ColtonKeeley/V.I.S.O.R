@@ -1,7 +1,7 @@
 import ollama
 from PIL import Image, ImageFilter
 import io
-
+#test test 
 def preprocess_for_cafe(image_path, output_size=(448, 448)):
     # 1. Load the image
     with Image.open(image_path) as img:
