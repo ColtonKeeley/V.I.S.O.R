@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { Badge } from "@/components/ui/badge";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export function ConnectionStatus() {
   const [connected, setConnected] = useState<boolean | null>(null);
@@ -28,23 +31,30 @@ export function ConnectionStatus() {
     };
   }, []);
 
+  const dotColor = connected
+    ? "bg-emerald-400"
+    : connected === false
+      ? "bg-red-400"
+      : "bg-muted-foreground/40";
+
+  const label = connected
+    ? "Connected"
+    : connected === false
+      ? "Offline"
+      : "Checking";
+
   return (
     <Tooltip>
-      <TooltipTrigger
-        className="inline-flex cursor-default"
-        render={
-          <Badge
-            variant={connected ? "default" : connected === false ? "destructive" : "secondary"}
-            className="gap-1.5 cursor-default"
-          />
-        }
-      >
-        <span
-          className={`h-2 w-2 rounded-full ${
-            connected ? "bg-green-400 animate-pulse" : connected === false ? "bg-red-400" : "bg-muted-foreground"
-          }`}
-        />
-        {connected ? "API Connected" : connected === false ? "API Offline" : "Checking..."}
+      <TooltipTrigger className="inline-flex cursor-default">
+        <div className="flex items-center gap-2 rounded-full border border-border/40 bg-card/60 px-3 py-1.5 text-[11px] text-muted-foreground backdrop-blur-sm">
+          <span className="relative flex h-2 w-2">
+            {connected && (
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-40" />
+            )}
+            <span className={`relative inline-flex h-2 w-2 rounded-full ${dotColor}`} />
+          </span>
+          {label}
+        </div>
       </TooltipTrigger>
       <TooltipContent>
         {connected

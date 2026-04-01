@@ -39,6 +39,14 @@ export interface Stats {
   visor_counts: Record<string, number>;
 }
 
+export interface VisorMeta {
+  id: string;
+  name: string;
+  description: string;
+  file_extensions: string[];
+  icon: string;
+}
+
 // ---------------------------------------------------------------------------
 // API Functions
 // ---------------------------------------------------------------------------
@@ -46,6 +54,7 @@ export interface Stats {
 export const api = {
   health: () => request<{ status: string }>("/api/health"),
   getStats: () => request<Stats>("/api/stats"),
+  listVisors: () => request<VisorMeta[]>("/api/visors"),
   listProjects: () => request<Project[]>("/api/projects"),
   getProject: (id: string) => request<Project>(`/api/projects/${id}`),
   createProject: (data: { name: string; description?: string; visor_type?: string }) =>

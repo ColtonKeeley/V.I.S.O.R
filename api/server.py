@@ -4,9 +4,12 @@ Bridges the Next.js frontend to the Python Visor framework.
 Runs on localhost only — never exposed to the network.
 """
 
+import importlib.util
+import inspect
 import json
 import os
 import shutil
+import sys
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,6 +21,8 @@ from pydantic import BaseModel
 
 PROJECTS_DIR = Path(__file__).resolve().parent.parent / "projects"
 PROJECTS_DIR.mkdir(exist_ok=True)
+
+VISORS_DIR = Path(__file__).resolve().parent.parent / "Backend" / "Visors"
 
 app = FastAPI(title="V.I.S.O.R. API", version="0.1.0")
 
@@ -153,6 +158,50 @@ def delete_project(project_id: str):
     p = _project_path(project_id)
     shutil.rmtree(p)
     return {"deleted": project_id}
+
+
+@app.get("/api/visors")
+def list_visors():
+    """Auto-discover visors from Backend/Visors/*/visor.py files."""
+    visors = []
+    if not VISORS_DIR.exists():
+        return visors
+
+    # Add Visors dir to path so visor_base can be imported by children
+    visors_str = str(VISORS_DIR)
+    if visors_str not in sys.path:
+        sys.path.insert(0, visors_str)
+
+    for subdir in sorted(VISORS_DIR.iterdir()):
+        visor_file = subdir / "visor.py"
+        if not subdir.is_dir() or not visor_file.exists():
+            continue
+
+        try:
+            spec = importlib.util.spec_from_file_location(
+                f"visor_{subdir.name}", visor_file
+            )
+            if spec is None or spec.loader is None:
+                continue
+            module = importlib.util.module_from_spec(spec)
+            # Add the visor's own directory so relative imports work
+            subdir_str = str(subdir)
+            if subdir_str not in sys.path:
+                sys.path.insert(0, subdir_str)
+            spec.loader.exec_module(module)
+
+            # Find the BaseVisor subclass in the module
+            from visor_base import BaseVisor
+
+            for _, obj in inspect.getmembers(module, inspect.isclass):
+                if issubclass(obj, BaseVisor) and obj is not BaseVisor and obj.VISOR_ID:
+                    visors.append(obj.metadata())
+                    break
+        except Exception as exc:
+            # Log but don't crash — a broken visor shouldn't kill the API
+            print(f"[visors] Failed to load {visor_file}: {exc}")
+
+    return visors
 
 
 @app.get("/api/stats")

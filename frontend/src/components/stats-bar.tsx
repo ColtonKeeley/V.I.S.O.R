@@ -36,16 +36,16 @@ export function StatsBar({ stats }: StatsBarProps) {
       {items.map((item) => (
         <div
           key={item.label}
-          className="flex items-center gap-3 rounded-xl border bg-card px-4 py-3"
+          className="group flex items-center gap-3 rounded-xl border border-border/40 bg-card/60 backdrop-blur-sm px-4 py-3 transition-all hover:surface-glow"
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/[0.07] text-primary transition-colors group-hover:bg-primary/[0.12]">
             {item.icon}
           </div>
           <div>
-            <p className="text-2xl font-semibold leading-none tracking-tight">
+            <p className="text-xl font-semibold leading-none tracking-tight tabular-nums">
               {item.value}
             </p>
-            <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>
+            <p className="text-[11px] text-muted-foreground/70 mt-1">{item.label}</p>
           </div>
         </div>
       ))}

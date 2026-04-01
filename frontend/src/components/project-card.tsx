@@ -1,16 +1,9 @@
 "use client";
 
-import type { Project } from "@/lib/api";
+import type { Project, VisorMeta } from "@/lib/api";
 import { api } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,38 +15,25 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import {
-  FileText,
-  Image,
-  MoreVertical,
-  Trash2,
-  FolderOpen,
-  Mail,
-  Table,
-} from "lucide-react";
+import { FileText, Image, MoreVertical, Trash2 } from "lucide-react";
+import { VisorIcon } from "@/components/visor-icon";
 
-const VISOR_ICONS: Record<string, React.ReactNode> = {
-  email: <Mail className="h-5 w-5" />,
-  pdf: <FileText className="h-5 w-5" />,
-  csv: <Table className="h-5 w-5" />,
-  image: <Image className="h-5 w-5" />,
-};
-
-const STATUS_VARIANT: Record<string, "default" | "secondary" | "outline" | "destructive"> = {
-  new: "outline",
-  collecting: "secondary",
-  augmenting: "secondary",
-  filtering: "secondary",
-  exporting: "secondary",
-  complete: "default",
+const STATUS_COLORS: Record<string, string> = {
+  new: "bg-muted/60 text-muted-foreground",
+  collecting: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+  augmenting: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+  filtering: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+  exporting: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400",
+  complete: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
 };
 
 interface ProjectCardProps {
   project: Project;
+  visor?: VisorMeta;
   onDeleted: () => void;
 }
 
-export function ProjectCard({ project, onDeleted }: ProjectCardProps) {
+export function ProjectCard({ project, visor, onDeleted }: ProjectCardProps) {
   const created = new Date(project.created_at);
   const relativeTime = getRelativeTime(created);
 
@@ -67,19 +47,24 @@ export function ProjectCard({ project, onDeleted }: ProjectCardProps) {
   }
 
   return (
-    <Card className="group relative flex flex-col transition-all hover:shadow-lg hover:shadow-primary/5 hover:border-primary/20">
-      {/* Glow accent bar */}
-      <div className="absolute inset-x-0 top-0 h-[2px] rounded-t-lg bg-gradient-to-r from-primary/60 via-primary/30 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+    <div className="group relative flex flex-col rounded-2xl border border-border/50 bg-card/70 backdrop-blur-sm transition-all duration-200 hover:surface-glow-hover overflow-hidden">
+      {/* Top accent line */}
+      <div className="h-[2px] bg-gradient-to-r from-primary/50 via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
 
-      <CardHeader className="flex-1 pb-3">
-        <div className="flex items-start justify-between">
+      <div className="flex-1 p-5">
+        {/* Header row */}
+        <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-              {VISOR_ICONS[project.visor_type] || <FolderOpen className="h-5 w-5" />}
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/[0.08] text-primary transition-colors group-hover:bg-primary/[0.12]">
+              <VisorIcon name={visor?.icon ?? "folder-open"} className="h-5 w-5" />
             </div>
             <div>
-              <CardTitle className="text-base leading-tight">{project.name}</CardTitle>
-              <CardDescription className="text-xs mt-0.5">{relativeTime}</CardDescription>
+              <h3 className="text-[15px] font-semibold leading-tight tracking-tight">
+                {project.name}
+              </h3>
+              <p className="text-[11px] text-muted-foreground/70 mt-0.5">
+                {relativeTime}
+              </p>
             </div>
           </div>
 
@@ -89,51 +74,63 @@ export function ProjectCard({ project, onDeleted }: ProjectCardProps) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity rounded-lg"
                 />
               }
             >
-              <MoreVertical className="h-4 w-4" />
+              <MoreVertical className="h-3.5 w-3.5" />
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
+            <DropdownMenuContent align="end" className="rounded-xl">
               <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
+                className="text-destructive focus:text-destructive rounded-lg"
                 onClick={handleDelete}
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Delete Project
+                <Trash2 className="mr-2 h-3.5 w-3.5" />
+                Delete
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
+        {/* Description */}
         {project.description && (
-          <p className="text-sm text-muted-foreground mt-2 line-clamp-2">
+          <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2 mb-4">
             {project.description}
           </p>
         )}
-      </CardHeader>
 
-      <CardFooter className="pt-0 gap-2 flex-wrap">
-        <Badge variant={STATUS_VARIANT[project.status] || "outline"}>
+        {/* Visor label */}
+        {visor && (
+          <p className="text-[11px] text-muted-foreground/60 font-mono mb-3">
+            {visor.name}
+          </p>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="flex items-center gap-2 px-5 pb-4 pt-0 flex-wrap">
+        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-[11px] font-medium ${STATUS_COLORS[project.status] || STATUS_COLORS.new}`}>
           {project.status}
-        </Badge>
+        </span>
+
+        <div className="flex-1" />
+
         <Tooltip>
-          <TooltipTrigger render={<Badge variant="secondary" className="gap-1 font-mono text-xs" />}>
+          <TooltipTrigger render={<Badge variant="secondary" className="gap-1 font-mono text-[11px] rounded-lg border-0 bg-muted/50" />}>
             <FileText className="h-3 w-3" />
             {project.file_count ?? 0}
           </TooltipTrigger>
           <TooltipContent>Source files</TooltipContent>
         </Tooltip>
         <Tooltip>
-          <TooltipTrigger render={<Badge variant="secondary" className="gap-1 font-mono text-xs" />}>
+          <TooltipTrigger render={<Badge variant="secondary" className="gap-1 font-mono text-[11px] rounded-lg border-0 bg-muted/50" />}>
             <Image className="h-3 w-3" />
             {project.render_count ?? 0}
           </TooltipTrigger>
           <TooltipContent>Renders</TooltipContent>
         </Tooltip>
-      </CardFooter>
-    </Card>
+      </div>
+    </div>
   );
 }
 
